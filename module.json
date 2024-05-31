@@ -1,0 +1,21 @@
+{
+  "id": "live-drag",
+  "title": "Live drag",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "11",
+    "verified": "12"
+  },
+  "description": "A module that displays token dragging in real time",
+  "authors": [
+    {
+      "name": "Anyndel",
+      "discord": "anyndel",
+      "flags": {}
+    }
+  ],
+  "scripts": [
+    "scripts/live-drag.js"
+  ],
+  "socket": true
+}
