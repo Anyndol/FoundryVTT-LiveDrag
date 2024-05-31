@@ -25,7 +25,7 @@
 			"id": "lib-wrapper",
 			"type": "module",
 			"manifest": "https://raw.githubusercontent.com/ruipin/fvtt-lib-wrapper/master/module.json"
-		},
+		}
 	]
   },
   "scripts": [
