@@ -1,7 +1,7 @@
 {
   "id": "live-drag",
   "title": "Live drag",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "compatibility": {
     "minimum": "11",
     "verified": "12"
@@ -34,5 +34,5 @@
   "socket": true,
   "url": "https://github.com/Anyndol/FoundryVTT-LiveDrag",
   "manifest": "https://github.com/Anyndol/FoundryVTT-LiveDrag/releases/latest/download/module.json",
-  "download": "https://github.com/Anyndol/FoundryVTT-LiveDrag/releases/download/release-1.0.1/module.zip"
+  "download": "https://github.com/Anyndol/FoundryVTT-LiveDrag/releases/download/release-1.0.2/module.zip"
 }
