@@ -4,7 +4,7 @@ const DragStates = {
     LIVE: 2
 }
 
-let currentDragState = DragStates.NONE;
+let tokenDragStates = {};
 let pressedKey = "";
 Hooks.on("init", function() {
     const MODULE_ID = 'live-drag'
@@ -13,26 +13,27 @@ Hooks.on("init", function() {
     addSettings(MODULE_ID);
 
     libWrapper.register(MODULE_ID, 'Token.prototype._onDragLeftStart', (function() {
-        return async function(wrapped, ...args) {            
-            if(args[0].shiftKey 
-                || game.settings.get(MODULE_ID, 'alwaysOn') 
-                || pressedKey === game.settings.get(MODULE_ID, 'keybind').toLowerCase()) {
-                currentDragState = DragStates.LIVE
-            } else {
-                currentDragState = DragStates.STANDARD;
+        return async function(wrapped, ...args) {      
+            for (let t of canvas.tokens.controlled) {    
+                if(args[0].shiftKey 
+                    || game.settings.get(MODULE_ID, 'alwaysOn') 
+                    || (pressedKey && pressedKey === game.settings.get(MODULE_ID, 'keybind').toLowerCase())) {
+                    tokenDragStates[t.id] = DragStates.LIVE
+                    changeTokenVisibility(t, 0);
+                } else {
+                    tokenDragStates[t.id] = DragStates.STANDARD;
+                }
             }
             return wrapped.apply(this, args);
         }
     })(), 'WRAPPER');
 
     libWrapper.register(MODULE_ID, 'Token.prototype._onDragLeftMove', (function() {
-        return async function(wrapped, ...args) {         
-            if(currentDragState === DragStates.LIVE) {
-                args[0].shiftKey = true;
-                for (let t of canvas.tokens.controlled) {
-                    t.document.alpha = 0;
-                    t.border.alpha = 0;
-                    t.bars.alpha = 0;
+        return async function(wrapped, ...args) {
+            for (let t of canvas.tokens.controlled) {     
+                if(tokenDragStates[t.id] === DragStates.LIVE) {
+                    args[0].shiftKey = true;
+                    
                 }
             }
             return wrapped.apply(this, args);
@@ -40,9 +41,11 @@ Hooks.on("init", function() {
     })(), 'WRAPPER');
 
     libWrapper.register(MODULE_ID, 'Token.prototype._onDragLeftDrop', (function() {
-        return async function(wrapped, ...args) {            
-            if(currentDragState === DragStates.LIVE) {
-                args[0].shiftKey = true;
+        return async function(wrapped, ...args) {    
+            for (let t of canvas.tokens.controlled) {        
+                if(tokenDragStates[t.id] === DragStates.LIVE) {
+                    args[0].shiftKey = true;
+                }
             }
             return wrapped.apply(this, args);
         }
@@ -50,7 +53,7 @@ Hooks.on("init", function() {
 });
 
 Hooks.on("refreshToken", (token)=>{
-    if(currentDragState != DragStates.LIVE) return
+    if(tokenDragStates[token.id] != DragStates.LIVE) return
     if (!token.isPreview) return;
     if (!token.layer.preview.children.find(t=>t.id==token.id)) return;
     window.socketDrag.executeForOthers("showDrag", token.id, token.x, token.y);
@@ -68,20 +71,29 @@ Hooks.once("socketlib.ready", () => {
 });
 
 Hooks.on('preUpdateToken', (doc, change, options) => {
-    if(currentDragState === DragStates.LIVE) {
+    if(tokenDragStates[doc.id] === DragStates.LIVE) {
         options.animate = false;
     }
 });
 
 Hooks.on('updateToken', (doc, change, options) => {
-    if(currentDragState === DragStates.LIVE) {
-        doc.alpha = 1;
+    if(tokenDragStates[doc.id] === DragStates.LIVE) {
         const token = canvas.tokens.get(doc.id);
-        token.border.alpha = 1;
-        token.bars.alpha = 1;
-        currentDragState = DragStates.NONE;
+        changeTokenVisibility(token, 1);
+        tokenDragStates[token.id] = DragStates.NONE;
     }
 });
+
+function changeTokenVisibility(token, newVisibility) {
+    token.effects.alpha = newVisibility;
+    token.nameplate.alpha = newVisibility;
+    token.border.alpha = newVisibility;
+    token.bars.alpha = newVisibility;
+    token.target.alpha = newVisibility;
+    token.targeted.alpha = newVisibility;
+    token.tooltip.alpha = newVisibility;
+    token.document.alpha = newVisibility;
+}
 
 function configureAccesibility() {
     document.addEventListener('keydown', (event)=> {    
