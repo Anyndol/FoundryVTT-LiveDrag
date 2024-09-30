@@ -5,7 +5,7 @@ const DragStates = {
 }
 
 let tokenDragStates = {};
-let pressedKey = "";
+let isKeybindDown = false;
 Hooks.on("init", function() {
     const MODULE_ID = 'live-drag'
 
@@ -14,37 +14,15 @@ Hooks.on("init", function() {
 
     libWrapper.register(MODULE_ID, 'Token.prototype._onDragLeftStart', (function() {
         return async function(wrapped, ...args) {      
+            console.log(isKeybindDown)
             for (let t of canvas.tokens.controlled) {    
                 if(args[0].shiftKey 
                     || game.settings.get(MODULE_ID, 'alwaysOn') 
-                    || (pressedKey && pressedKey === game.settings.get(MODULE_ID, 'keybind').toLowerCase())) {
+                    || isKeybindDown) {
                     tokenDragStates[t.id] = DragStates.LIVE
                     changeTokenVisibility(t, 0);
                 } else {
                     tokenDragStates[t.id] = DragStates.STANDARD;
-                }
-            }
-            return wrapped.apply(this, args);
-        }
-    })(), 'WRAPPER');
-
-    libWrapper.register(MODULE_ID, 'Token.prototype._onDragLeftMove', (function() {
-        return async function(wrapped, ...args) {
-            for (let t of canvas.tokens.controlled) {     
-                if(tokenDragStates[t.id] === DragStates.LIVE) {
-                    args[0].shiftKey = true;
-                    
-                }
-            }
-            return wrapped.apply(this, args);
-        }
-    })(), 'WRAPPER');
-
-    libWrapper.register(MODULE_ID, 'Token.prototype._onDragLeftDrop', (function() {
-        return async function(wrapped, ...args) {    
-            for (let t of canvas.tokens.controlled) {        
-                if(tokenDragStates[t.id] === DragStates.LIVE) {
-                    args[0].shiftKey = true;
                 }
             }
             return wrapped.apply(this, args);
@@ -116,13 +94,19 @@ function addSettings(MODULE_ID){
         onChange: value => {}
     });
 
-    game.settings.register(MODULE_ID, 'keybind', {
-        name: 'Keybind',
-        hint: 'An extra keybind besides shift to enable live dragging',
-        scope: 'client',
-        config: true,
-        type: String,
-        default: "",
-        onChange: value => {}
+    game.keybindings.register(MODULE_ID, 'keybind', {
+        name: 'Live drag',
+        hint: 'Enable live dragging',
+        uneditable: [
+            {
+              key: "Shift"
+            }
+          ],
+          editable: [
+          ],
+        restricted: false,
+        onUp: () => {isKeybindDown = false;},
+        onDown: () => {isKeybindDown = true;},
+        precedence: CONST.KEYBINDING_PRECEDENCE.NORMAL
     });
 }
